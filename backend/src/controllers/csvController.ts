@@ -12,7 +12,7 @@ export const uploadCsv = async (
   }
 
   try {
-    const { outputFileName, processingTime, departmentCount } =
+    const { outputFileName, processingTimeMs, departmentCount } =
       await processCsv(req.file.path);
     const downloadLink = `${req.protocol}://${req.get(
       "host"
@@ -20,7 +20,7 @@ export const uploadCsv = async (
     res.json({
       message: "File processed successfully",
       downloadLink,
-      processingTime,
+      processingTimeMs,
       departmentCount,
     });
   } catch (error) {

@@ -9,7 +9,7 @@ interface SalesData {
 
 interface ProcessResult {
   outputFileName: string;
-  processingTime: number;
+  processingTimeMs: number;
   departmentCount: number;
 }
 
