@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Inter } from "next/font/google";
+import { Toaster } from "@/components/toaster";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "CSV Parser",
-  description: "Upload and process CSV files with a sleek Vercel-like UI",
+  description: "Upload and process CSV files",
 };
 
 export default function RootLayout({
@@ -16,7 +18,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }
