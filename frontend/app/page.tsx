@@ -133,8 +133,8 @@ export default function HomePage() {
           <h1 className="text-3xl font-semibold tracking-tight">
             CSV Processor
           </h1>
-          <p className="text-white/60 mt-2">
-            Vercel-inspired interface to upload and process CSV files.
+          <p className="text-neutral-600 dark:text-white/70 mt-2">
+            interface to upload and process CSV files.
           </p>
         </div>
 
@@ -156,15 +156,17 @@ export default function HomePage() {
                   <Upload className="h-4 w-4 mr-2" />
                   {uploading ? "Uploading..." : "Upload"}
                 </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={clearAll}
-                  disabled={uploading && !result}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Clear
-                </Button>
+                {(file || result) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={clearAll}
+                    disabled={uploading}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear
+                  </Button>
+                )}
                 {result?.downloadLink && (
                   <Button
                     type="button"
@@ -178,7 +180,7 @@ export default function HomePage() {
               </div>
               {uploading && (
                 <div className="space-y-2">
-                  <div className="flex justify-between text-xs text-white/70">
+                  <div className="flex justify-between text-xs text-neutral-700 dark:text-white/80">
                     <span>Uploading</span>
                     <span>{progress}%</span>
                   </div>
@@ -197,40 +199,44 @@ export default function HomePage() {
             {result && (
               <div className="mt-6 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="rounded-md border border-white/10 p-3">
-                    <div className="text-xs text-white/60">
+                  <div className="rounded-md border border-black/10 dark:border-white/10 p-3">
+                    <div className="text-xs text-neutral-600 dark:text-white/70">
                       Unique Departments
                     </div>
                     <div className="text-lg font-semibold">
                       {result.departmentCount}
                     </div>
                   </div>
-                  <div className="rounded-md border border-white/10 p-3">
-                    <div className="text-xs text-white/60">Processing Time</div>
+                  <div className="rounded-md border border-black/10 dark:border-white/10 p-3">
+                    <div className="text-xs text-neutral-600 dark:text-white/70">
+                      Processing Time
+                    </div>
                     <div className="text-lg font-semibold">
                       {result.processingTimeMs} ms
                     </div>
                   </div>
-                  <div className="rounded-md border border-white/10 p-3">
-                    <div className="text-xs text-white/60">Status</div>
-                    <div className="text-lg font-semibold text-emerald-300 inline-flex items-center gap-1">
+                  <div className="rounded-md border border-black/10 dark:border-white/10 p-3">
+                    <div className="text-xs text-neutral-600 dark:text-white/70">
+                      Status
+                    </div>
+                    <div className="text-lg font-semibold text-emerald-600 dark:text-emerald-300 inline-flex items-center gap-1">
                       <CheckCircle2 className="h-4 w-4" /> Ready
                     </div>
                   </div>
                 </div>
                 {previewRows && (
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-4 overflow-auto">
-                    <div className="text-xs text-white/60 mb-2">
+                  <div className="rounded-lg surface-strong p-4 overflow-auto">
+                    <div className="text-xs text-neutral-700 dark:text-white/80 mb-2">
                       Preview (processed CSV)
                     </div>
                     <div className="w-full overflow-auto">
-                      <table className="w-full text-sm">
+                      <table className="w-full text-sm border-collapse">
                         <thead>
-                          <tr className="text-left">
+                          <tr className="text-left border-b border-neutral-300 dark:border-white/10">
                             {previewRows[0]?.map((h, i) => (
                               <th
                                 key={i}
-                                className="pr-6 pb-2 font-medium text-white/80"
+                                className="pr-6 pb-2 font-medium text-neutral-900 dark:text-white"
                               >
                                 {h}
                               </th>
@@ -239,9 +245,15 @@ export default function HomePage() {
                         </thead>
                         <tbody>
                           {previewRows.slice(1, 26).map((r, idx) => (
-                            <tr key={idx} className="border-t border-white/10">
+                            <tr
+                              key={idx}
+                              className="border-t border-neutral-200 dark:border-white/10"
+                            >
                               {r.map((c, i) => (
-                                <td key={i} className="pr-6 py-2 text-white/90">
+                                <td
+                                  key={i}
+                                  className="pr-6 py-2 text-neutral-900 dark:text-white"
+                                >
                                   {c}
                                 </td>
                               ))}
@@ -251,7 +263,7 @@ export default function HomePage() {
                       </table>
                     </div>
                     {!previewRows?.length && previewText && (
-                      <pre className="text-sm whitespace-pre-wrap break-words mt-2">
+                      <pre className="text-sm whitespace-pre-wrap break-words mt-2 text-neutral-900 dark:text-white">
                         {previewText}
                       </pre>
                     )}

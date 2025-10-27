@@ -64,14 +64,16 @@ export function FileDropzone({
         {selectedFile ? (
           <>
             <p className="text-sm font-medium">{selectedFile.name}</p>
-            <p className="text-xs text-white/60 mt-1">Click to change file</p>
+            <p className="text-xs text-neutral-600 dark:text-white/70 mt-1">
+              Click to change file
+            </p>
           </>
         ) : (
           <>
             <p className="text-sm">
               Drag and drop your CSV here, or click to browse.
             </p>
-            <p className="text-xs text-white/60">
+            <p className="text-xs text-neutral-600 dark:text-white/70">
               Only .csv files are accepted.
             </p>
           </>

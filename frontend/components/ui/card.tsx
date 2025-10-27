@@ -8,7 +8,9 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border border-white/10 bg-white/5 shadow-sm",
+      // Theme-aware surface: subtle panel in light, glassy tint in dark
+      "rounded-lg border surface shadow-sm",
+      "border-black/10 dark:border-white/10",
       className
     )}
     {...props}
@@ -40,7 +42,10 @@ const CardDescription = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <p className={cn("text-sm text-white/60", className)} {...props} />
+  <p
+    className={cn("text-sm text-neutral-600 dark:text-white/70", className)}
+    {...props}
+  />
 );
 
 const CardContent = ({

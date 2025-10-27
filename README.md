@@ -54,6 +54,27 @@ Clothing,200
 
 The API responds with a link to download the processed CSV and metrics like processing time and unique department count.
 
+## Algorithm and memory efficiency
+
+The processor is designed to handle large CSVs without loading the whole file into memory.
+
+- Streaming pipeline: `fs.createReadStream(file) → csv-parser → aggregate → write processed CSV`.
+- Aggregation: for each row, parse `Department Name` and `Number of Sales`; maintain a hash map `{ [department]: totalSales }` and increment totals as rows stream in.
+- Output: once the stream ends, emit a compact CSV with one row per department (`Department Name, Total Number of Sales`).
+- Background workers: by default, the aggregation runs in a worker thread for responsiveness. If the worker cannot be started, the service falls back to inline processing automatically.
+- Temporary files: the uploaded temp file is removed after processing to reclaim disk space.
+
+Estimated complexity:
+
+- Time: O(N + U) ≈ O(N), where N is the number of input rows and U is the number of unique departments (writing the aggregated output touches U rows).
+- Space: O(U), because only the aggregation map and final output lines (U + 1) are kept in memory; the input CSV is streamed.
+
+Notes and trade-offs:
+
+- The current implementation builds the small processed CSV in memory before writing it; this is typically tiny compared to the input because it has one row per department. If U could be very large, we can stream the output rows directly to the file instead of joining a string at the end.
+- Non-numeric or missing `Number of Sales` values are ignored; departments without valid numbers do not affect totals.
+- Worker boundaries isolate CPU work; setting `DISABLE_WORKER=true` forces inline processing if needed.
+
 ## Backend
 
 ### Requirements
