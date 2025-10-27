@@ -13,6 +13,7 @@ out/
 # Production builds
 dist/
 build/
+backend/processed	
 
 # Environment variables
 .env*.local
