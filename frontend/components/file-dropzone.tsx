@@ -56,8 +56,8 @@ export function FileDropzone({
         onClick={() => inputRef.current?.click()}
         className={cn(
           "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition-all",
-          "border-white/20 bg-white/5 hover:bg-white/10",
-          isOver && "border-white/60 bg-white/10"
+          "surface hover:surface-strong",
+          isOver && "surface-strong"
         )}
       >
         <FileUp className="h-6 w-6 mb-2" />

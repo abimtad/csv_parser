@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Upload, Download, CheckCircle2, CircleAlert } from "lucide-react";
+import { Upload, Download, CheckCircle2, CircleAlert, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,16 @@ export default function HomePage() {
   } | null>(null);
   const [previewRows, setPreviewRows] = React.useState<string[][] | null>(null);
   const [previewText, setPreviewText] = React.useState<string | null>(null);
+
+  const clearAll = () => {
+    setFile(null);
+    setResult(null);
+    setError(null);
+    setPreviewRows(null);
+    setPreviewText(null);
+    setProgress(0);
+    setUploading(false);
+  };
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,7 +134,7 @@ export default function HomePage() {
             CSV Processor
           </h1>
           <p className="text-white/60 mt-2">
-            interface to upload and process CSV files.
+            Vercel-inspired interface to upload and process CSV files.
           </p>
         </div>
 
@@ -145,6 +155,15 @@ export default function HomePage() {
                 <Button type="submit" disabled={uploading || !file}>
                   <Upload className="h-4 w-4 mr-2" />
                   {uploading ? "Uploading..." : "Upload"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={clearAll}
+                  disabled={uploading && !result}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear
                 </Button>
                 {result?.downloadLink && (
                   <Button
