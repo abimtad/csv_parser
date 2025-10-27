@@ -1,21 +1,24 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { processCsv } from "../services/csvProcessor.js";
+import ApiError from "../errors/apiError.js";
 
-export const uploadCsv = async (req: Request, res: Response) => {
+export const uploadCsv = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.file) {
-    return res.status(400).send("No file uploaded.");
+    return next(new ApiError(400, "No file uploaded."));
   }
 
   try {
-    const outputFileName = await processCsv(req.file.path);
+    const { outputFileName, processingTime, departmentCount } = await processCsv(req.file.path);
     const downloadLink = `${req.protocol}://${req.get(
       "host"
-    )}/download/${outputFileName}`;
+    )}/api/download/${outputFileName}`;
     res.json({
       message: "File processed successfully",
       downloadLink,
+      processingTime,
+      departmentCount,
     });
   } catch (error) {
-    res.status(500).send("Error processing file.");
+    next(new ApiError(500, "Error processing file."));
   }
 };

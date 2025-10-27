@@ -7,8 +7,15 @@ interface SalesData {
   [department: string]: number;
 }
 
-export const processCsv = (filePath: string): Promise<string> => {
+interface ProcessResult {
+  outputFileName: string;
+  processingTime: number;
+  departmentCount: number;
+}
+
+export const processCsv = (filePath: string): Promise<ProcessResult> => {
   return new Promise((resolve, reject) => {
+    const startTime = Date.now();
     const salesData: SalesData = {};
     const outputFileName = `${uuidv4()}.csv`;
     const outputPath = path.join("processed", outputFileName);
@@ -28,6 +35,7 @@ export const processCsv = (filePath: string): Promise<string> => {
         }
       })
       .on("end", () => {
+        const departmentCount = Object.keys(salesData).length;
         const outputData = [["Department Name", "Total Number of Sales"]];
         for (const department in salesData) {
           outputData.push([department, salesData[department].toString()]);
@@ -42,7 +50,8 @@ export const processCsv = (filePath: string): Promise<string> => {
             fs.unlink(filePath, (err) => {
               if (err) console.error("Error deleting temp file:", err);
             });
-            resolve(outputFileName);
+            const processingTime = Date.now() - startTime;
+            resolve({ outputFileName, processingTime, departmentCount });
           }
         });
       })
