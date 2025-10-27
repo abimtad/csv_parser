@@ -24,6 +24,7 @@ export const uploadCsv = async (
       departmentCount,
     });
   } catch (error) {
-    next(new ApiError(500, "Error processing file."));
+    const message = error instanceof Error ? error.message : String(error);
+    next(new ApiError(500, `Error processing file: ${message}`));
   }
 };
