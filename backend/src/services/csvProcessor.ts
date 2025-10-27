@@ -50,8 +50,8 @@ export const processCsv = (filePath: string): Promise<ProcessResult> => {
             fs.unlink(filePath, (err) => {
               if (err) console.error("Error deleting temp file:", err);
             });
-            const processingTime = Date.now() - startTime;
-            resolve({ outputFileName, processingTime, departmentCount });
+            const processingTimeMs = Date.now() - startTime;
+            resolve({ outputFileName, processingTimeMs, departmentCount });
           }
         });
       })
