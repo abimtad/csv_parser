@@ -13,7 +13,13 @@ out/
 # Production builds
 dist/
 build/
-backend/processed	
+# Generated artifacts
+# Avoid committing processed CSV outputs and uploaded files
+backend/processed/
+backend/uploads/
+
+# In case a processed file is accidentally created at repo root
+/processed.csv
 
 # Environment variables
 .env*.local
