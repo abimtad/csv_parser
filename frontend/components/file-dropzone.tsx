@@ -8,16 +8,23 @@ interface FileDropzoneProps {
   accept?: string;
   onFileSelected: (file: File) => void;
   selectedFile?: File | null;
+  resetToken?: number;
 }
 
 export function FileDropzone({
   accept = ".csv,text/csv",
   onFileSelected,
   selectedFile,
+  resetToken,
 }: FileDropzoneProps) {
   const [isOver, setIsOver] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+
+  // Ensure the same file can be re-selected after clearing
+  React.useEffect(() => {
+    if (inputRef.current) inputRef.current.value = "";
+  }, [resetToken]);
 
   const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -53,7 +60,10 @@ export function FileDropzone({
         }}
         onDragLeave={() => setIsOver(false)}
         onDrop={onDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => {
+          if (inputRef.current) inputRef.current.value = "";
+          inputRef.current?.click();
+        }}
         className={cn(
           "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition-all",
           "surface hover:surface-strong",

@@ -27,6 +27,42 @@ export default function HomePage() {
   } | null>(null);
   const [previewRows, setPreviewRows] = React.useState<string[][] | null>(null);
   const [previewText, setPreviewText] = React.useState<string | null>(null);
+  const [resetToken, setResetToken] = React.useState(0);
+
+  // Persist/load state (result and preview) so it survives reloads until cleared
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("csvParserState");
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as {
+        filename?: string;
+        result?: {
+          downloadLink: string;
+          processingTimeMs: number;
+          departmentCount: number;
+        } | null;
+      };
+      if (parsed?.result) {
+        setResult(parsed.result);
+      }
+      if (parsed?.filename) {
+        // refetch preview on load to restore table
+        fetch(`/api/download?filename=${encodeURIComponent(parsed.filename)}`)
+          .then((r) => (r.ok ? r.text() : Promise.reject()))
+          .then((text) => {
+            setPreviewText(text);
+            const rows = text
+              .trim()
+              .split(/\r?\n/)
+              .map((line) => line.split(","));
+            setPreviewRows(rows);
+          })
+          .catch(() => void 0);
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
 
   const clearAll = () => {
     setFile(null);
@@ -36,6 +72,10 @@ export default function HomePage() {
     setPreviewText(null);
     setProgress(0);
     setUploading(false);
+    setResetToken((n) => n + 1);
+    try {
+      localStorage.removeItem("csvParserState");
+    } catch {}
   };
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -102,6 +142,15 @@ export default function HomePage() {
               .split(/\r?\n/)
               .map((line) => line.split(","));
             setPreviewRows(rows);
+            try {
+              localStorage.setItem(
+                "csvParserState",
+                JSON.stringify({
+                  filename,
+                  result: data,
+                })
+              );
+            } catch {}
           }
         }
       } catch {
@@ -149,7 +198,11 @@ export default function HomePage() {
             <form onSubmit={handleUpload} className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="file">CSV file</Label>
-                <FileDropzone onFileSelected={setFile} selectedFile={file} />
+                <FileDropzone
+                  onFileSelected={setFile}
+                  selectedFile={file}
+                  resetToken={resetToken}
+                />
               </div>
               <div className="flex items-center gap-3">
                 <Button type="submit" disabled={uploading || !file}>
