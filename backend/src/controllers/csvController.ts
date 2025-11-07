@@ -24,6 +24,10 @@ export const uploadCsv = async (
       departmentCount,
     });
   } catch (error) {
+    // Log the original error for debugging (tests and runtime will see this
+    // in stdout/stderr). The error is still passed to the error middleware
+    // which serializes a safe message to the client.
+    console.error("uploadCsv caught error:", error);
     const message = error instanceof Error ? error.message : String(error);
     next(new ApiError(500, `Error processing file: ${message}`));
   }

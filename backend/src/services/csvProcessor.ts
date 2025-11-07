@@ -43,20 +43,24 @@ const processInline = (filePath: string): Promise<ProcessResult> => {
         }
 
         const outputCsv = outputData.map((row) => row.join(",")).join("\n");
-
-        fs.writeFile(outputPath, outputCsv, (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            fs.unlink(filePath, (err) => {
-              if (err) console.error("Error deleting temp file:", err);
-            });
-            const processingTimeMs = Date.now() - startTime;
-            resolve({ outputFileName, processingTimeMs, departmentCount });
-          }
+        // Ensure output directory exists
+        fs.mkdir(path.dirname(outputPath), { recursive: true }, (mkErr) => {
+          if (mkErr) return reject(mkErr);
+          fs.writeFile(outputPath, outputCsv, (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              fs.unlink(filePath, (err) => {
+                if (err) console.error("Error deleting temp file:", err);
+              });
+              const processingTimeMs = Date.now() - startTime;
+              resolve({ outputFileName, processingTimeMs, departmentCount });
+            }
+          });
         });
       })
       .on("error", (error) => {
+        console.error("processInline stream error:", error);
         reject(error);
       });
   });
@@ -78,11 +82,17 @@ export const processCsv = (filePath: string): Promise<ProcessResult> => {
   // Try worker first; if it fails for any reason, gracefully fall back to inline
   return new Promise<ProcessResult>((resolve, reject) => {
     const outputFileName = `${uuidv4()}.csv`;
+    // Use CommonJS style requires inside the worker source to avoid ESM
+    // / CommonJS mismatches when the worker is evaluated. Some runtime
+    // environments (and older Node/Jest setups) will treat eval'd code as
+    // script (not module) which makes top-level `import` invalid and throws
+    // "Cannot use import statement outside a module". Using `require`
+    // keeps the worker compatible with both module and non-module hosts.
     const workerCode = `
-      import { parentPort, workerData } from 'node:worker_threads';
-      import fs from 'node:fs';
-      import csv from 'csv-parser';
-      import path from 'node:path';
+      const { parentPort, workerData } = require('worker_threads');
+      const fs = require('fs');
+      const csv = require('csv-parser');
+      const path = require('path');
 
       const { filePath, outputFileName } = workerData;
       const startTime = Date.now();
@@ -107,14 +117,18 @@ export const processCsv = (filePath: string): Promise<ProcessResult> => {
           }
           const outputCsv = outputData.map((row) => row.join(',')).join('\n');
 
-          fs.writeFile(outputPath, outputCsv, (err) => {
-            if (err) {
-              throw err;
-            } else {
-              fs.unlink(filePath, () => {});
-              const processingTimeMs = Date.now() - startTime;
-              parentPort?.postMessage({ outputFileName, processingTimeMs, departmentCount });
-            }
+          // Ensure output directory exists
+          fs.mkdir(path.dirname(outputPath), { recursive: true }, (mkErr) => {
+            if (mkErr) throw mkErr;
+            fs.writeFile(outputPath, outputCsv, (err) => {
+              if (err) {
+                throw err;
+              } else {
+                fs.unlink(filePath, () => {});
+                const processingTimeMs = Date.now() - startTime;
+                parentPort && parentPort.postMessage({ outputFileName, processingTimeMs, departmentCount });
+              }
+            });
           });
         })
         .on('error', (error) => {
@@ -122,16 +136,16 @@ export const processCsv = (filePath: string): Promise<ProcessResult> => {
         });
     `;
 
-    const worker = new Worker(
-      `data:text/javascript,${encodeURIComponent(workerCode)}`,
-      {
-        eval: true,
-        type: "module",
-        workerData: { filePath, outputFileName },
-      } as unknown as any
-    );
-
+    // When using eval: true we must pass the raw JS source string to the
+    // Worker constructor. Previously the code was passed as a data: URI
+    // created with encodeURIComponent which produced percent-encoded
+    // sequences (e.g. "%0A") — those percent signs are valid in a URL
+    // but not valid JavaScript, causing the "Unexpected token '%'" error.
+    // Evaluate the workerCode as a script (CommonJS style). Do not set
+    // `type: 'module'` so the eval'd source will run under CommonJS semantics
+    // which matches the `require` calls above.
     let settled = false;
+
     const doFallback = async (reason?: unknown) => {
       if (settled) return;
       settled = true;
@@ -139,16 +153,36 @@ export const processCsv = (filePath: string): Promise<ProcessResult> => {
         const result = await processInline(filePath);
         resolve(result);
       } catch (err) {
+        console.error("Fallback processing failed:", reason || err);
         reject(reason || err);
       }
     };
+
+    // Worker construction can throw synchronously in certain environments
+    // (for example, when eval'd code contains unsupported syntax). Wrap
+    // creation in try/catch and fall back to inline processing if it fails.
+    let worker: Worker | undefined;
+    try {
+      worker = new Worker(workerCode, {
+        eval: true,
+        workerData: { filePath, outputFileName },
+      } as unknown as any);
+    } catch (err) {
+      // Synchronous failure creating the worker — fall back to inline.
+      console.error("Worker constructor threw:", err);
+      doFallback(err);
+      return;
+    }
 
     worker.on("message", (result: ProcessResult) => {
       if (settled) return;
       settled = true;
       resolve(result);
     });
-    worker.on("error", (err) => doFallback(err));
+    worker.on("error", (err) => {
+      console.error("Worker emitted error:", err);
+      doFallback(err);
+    });
     worker.on("exit", (code) => {
       if (!settled && code !== 0)
         doFallback(new Error(`Worker exited with code ${code}`));
