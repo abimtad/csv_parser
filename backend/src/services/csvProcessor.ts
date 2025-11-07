@@ -100,7 +100,7 @@ export const processCsv = (filePath: string): Promise<ProcessResult> => {
     };
 
     // Resolve the worker file URL relative to this module
-    const workerFile = new URL('./csvWorker.cjs', import.meta.url);
+    const workerFile = new URL("./csvWorker.cjs", import.meta.url);
     let worker: Worker | undefined;
     try {
       // Create worker from file (CommonJS .cjs) — do not use eval.
@@ -109,7 +109,7 @@ export const processCsv = (filePath: string): Promise<ProcessResult> => {
       } as unknown as any);
     } catch (err) {
       // Synchronous failure creating the worker — fall back to inline.
-      console.error('Worker constructor threw:', err);
+      console.error("Worker constructor threw:", err);
       doFallback(err);
       return;
     }
